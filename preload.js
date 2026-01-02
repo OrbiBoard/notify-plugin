@@ -7,7 +7,7 @@
       setClickThrough: (enable) => ipcRenderer.invoke('notify:setClickThrough', !!enable),
       // 运行窗口订阅主进程投递的通知
       onEnqueue: (handler) => {
-        try { ipcRenderer.on('notify:enqueue', (_e, payloadOrList) => handler && handler(payloadOrList)); } catch {}
+        try { ipcRenderer.on('notify:enqueue', (_e, payloadOrList) => handler && handler(payloadOrList)); } catch (e) {}
       },
       // 控制运行窗口显示/隐藏（空闲隐藏，有通知显示）
       setVisible: (visible) => ipcRenderer.invoke('notify:setVisible', !!visible),
@@ -15,7 +15,7 @@
       destroyRuntime: () => ipcRenderer.invoke('notify:destroyRuntime'),
       // 运行窗口订阅主进程广播的配置更新，实现设置实时生效
       onConfigUpdate: (handler) => {
-        try { ipcRenderer.on('notify:config:update', (_e, cfg) => handler && handler(cfg)); } catch {}
+        try { ipcRenderer.on('notify:config:update', (_e, cfg) => handler && handler(cfg)); } catch (e) {}
       },
       // 系统音量暂调：播放通知音效前设置、结束后恢复
       setSystemVolume: (level) => ipcRenderer.invoke('notify:setSystemVolume', Number(level)),

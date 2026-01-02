@@ -7,7 +7,7 @@
   };
 
   // 初始启用穿透（左上角通知与空闲时）
-  try { window.notifyAPI?.setClickThrough(true); } catch {}
+  try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
 
   // 订阅配置更新：由主进程广播，实现设置实时生效
   try {
@@ -25,9 +25,9 @@
         state.ttsVolume = Math.max(0, Math.min(100, Number(cfg?.ttsVolume ?? state.ttsVolume)));
         const audio = cfg?.audio || {};
         ['info','warn','error'].forEach((k) => { state.audio[k] = audio?.[k] || null; });
-      } catch {}
+      } catch (e) {}
     });
-  } catch {}
+  } catch (e) {}
 
   // 基础工具
   const playSoundBuiltin = (which = 'in', after) => {
@@ -39,17 +39,17 @@
       try {
         const target = Math.max(0, Math.min(100, Number(state.systemSoundVolume || 80)));
         window.notifyAPI?.setSystemVolume?.(target);
-      } catch {}
+      } catch (e) {}
       a.addEventListener('ended', () => {
-        try { window.notifyAPI?.restoreSystemVolume?.(); } catch {}
-        try { if (typeof after === 'function') after(); } catch {}
+        try { window.notifyAPI?.restoreSystemVolume?.(); } catch (e) {}
+        try { if (typeof after === 'function') after(); } catch (e) {}
       });
       a.play().catch(() => {
         // 播放失败也尝试恢复
-        try { window.notifyAPI?.restoreSystemVolume?.(); } catch {}
-        try { if (typeof after === 'function') after(); } catch {}
+        try { window.notifyAPI?.restoreSystemVolume?.(); } catch (e) {}
+        try { if (typeof after === 'function') after(); } catch (e) {}
       });
-    } catch {}
+    } catch (e) {}
   };
 
   const speak = async (text) => {
@@ -67,7 +67,7 @@
             a.play().catch(() => {});
             return;
           }
-        } catch {}
+        } catch (e) {}
       }
       if (state.ttsEngine === 'edge' && state.ttsEndpoint) {
         try {
@@ -86,7 +86,7 @@
             setTimeout(() => URL.revokeObjectURL(objUrl), 15000);
             return;
           }
-        } catch {}
+        } catch (e) {}
       }
       // 回退到系统语音
       const utter = new SpeechSynthesisUtterance(text);
@@ -100,7 +100,7 @@
         if (found) utter.voice = found;
       }
       window.speechSynthesis?.speak(utter);
-    } catch {}
+    } catch (e) {}
   };
 
   // 队列控制
@@ -108,13 +108,13 @@
     // 全局关闭通知时直接忽略
     if (!state.enabled) return;
     state.queue.push(n);
-    try { window.notifyAPI?.setVisible(true); } catch {}
+    try { window.notifyAPI?.setVisible(true); } catch (e) {}
     if (!state.active) next();
   };
 
   const next = async () => {
     const n = state.queue.shift();
-    if (!n) { state.active = false; try { window.notifyAPI?.destroyRuntime?.(); } catch {}; return; }
+    if (!n) { state.active = false; try { window.notifyAPI?.destroyRuntime?.(); } catch (e) {}; return; }
     state.active = true;
     await showNotification(n);
     state.active = false;
@@ -208,7 +208,7 @@
 
   const showOverlay = ({ title, sub, autoClose, duration, showClose, closeDelay, source }, done) => {
     // 进入遮罩时关闭穿透
-    try { window.notifyAPI?.setClickThrough(false); } catch {}
+    try { window.notifyAPI?.setClickThrough(false); } catch (e) {}
     el.ovTitle.innerHTML = title;
     el.ovSub.innerHTML = sub || '';
     el.overlay.style.display = 'block';
@@ -264,7 +264,7 @@
       el.overlay.style.display = 'none';
       el.ovClose.onclick = null;
       // 退出遮罩恢复穿透
-      try { window.notifyAPI?.setClickThrough(true); } catch {}
+      try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
       // 遮罩关闭时不强制播放退场音效（按通知入场已播放一次）
       done();
     };
@@ -277,7 +277,7 @@
 
   const showOverlayText = ({ text, animate, duration }, done) => {
     // 进入遮罩时关闭穿透
-    try { window.notifyAPI?.setClickThrough(false); } catch {}
+    try { window.notifyAPI?.setClickThrough(false); } catch (e) {}
     el.overlayTextContent.textContent = String(text || '').trim();
     el.overlayText.style.display = 'flex';
     // 动画控制
@@ -292,14 +292,14 @@
         el.overlayText.classList.remove(outCls);
         el.overlayText.style.display = 'none';
         // 退出遮罩恢复穿透（纯文本遮罩不播放退场音效）
-        try { window.notifyAPI?.setClickThrough(true); } catch {}
+        try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
         done();
       }, 260);
     }, dur);
   };
 
   const showOverlayComponent = async ({ group, compId, props, duration, showClose, closeDelay, source }, done) => {
-    try { window.notifyAPI?.setClickThrough(false); } catch {}
+    try { window.notifyAPI?.setClickThrough(false); } catch (e) {}
     // 解析组件入口URL：优先指定ID，其次取组内首个
     let entryUrl = null;
     try {
@@ -311,7 +311,7 @@
         const list = (res?.ok && Array.isArray(res.components)) ? res.components : [];
         entryUrl = list[0]?.url || null;
       }
-    } catch {}
+    } catch (e) {}
     // 构造带查询参数的URL以传递属性（可选）
     try {
       if (entryUrl) {
@@ -330,7 +330,7 @@
         el.ovCompFrame.src = objUrl;
         setTimeout(() => URL.revokeObjectURL(objUrl), 15000);
       }
-    } catch {}
+    } catch (e) {}
 
     el.overlayComponent.style.display = 'block';
     let closable = !showClose;
@@ -378,7 +378,7 @@
       if (autoTimer) clearInterval(autoTimer);
       el.overlayComponent.style.display = 'none';
       el.ovCompFrame.src = 'about:blank';
-      try { window.notifyAPI?.setClickThrough(true); } catch {}
+      try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
       done();
     };
     el.ovCompClose.onclick = () => {
@@ -407,5 +407,5 @@
       const list = Array.isArray(payloadOrList) ? payloadOrList : [payloadOrList];
       list.forEach(enqueue);
     });
-  } catch {}
+  } catch (e) {}
 })();

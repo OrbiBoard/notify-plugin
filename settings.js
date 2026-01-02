@@ -30,7 +30,7 @@
       if (el.systemSoundVolume) el.systemSoundVolume.value = Math.round((cfg?.systemSoundVolume ?? 80));
       initVoices(cfg?.ttsVoiceURI);
       initEdgeVoices(cfg?.ttsEdgeVoice);
-    } catch {}
+    } catch (e) {}
   })();
 
   // 语音列表加载
@@ -66,18 +66,18 @@
       } else {
         window.speechSynthesis.onvoiceschanged = () => build();
       }
-    } catch {}
+    } catch (e) {}
   };
 
   // 试听入场与退场音效
   if (el.btnPlayIn) {
     el.btnPlayIn.addEventListener('click', () => {
-      try { window.settingsAPI?.pluginCall?.('notify.plugin', 'playSound', ['in']); } catch {}
+      try { window.settingsAPI?.pluginCall?.('notify.plugin', 'playSound', ['in']); } catch (e) {}
     });
   }
   if (el.btnPlayOut) {
     el.btnPlayOut.addEventListener('click', () => {
-      try { window.settingsAPI?.pluginCall?.('notify.plugin', 'playSound', ['out']); } catch {}
+      try { window.settingsAPI?.pluginCall?.('notify.plugin', 'playSound', ['out']); } catch (e) {}
     });
   }
   // 测试纯文本提示（全屏）
@@ -86,7 +86,7 @@
       try {
         const payload = { mode: 'overlay.text', text: '这是一条纯文本提示', animate: 'fade', duration: 2500 };
         window.settingsAPI?.pluginCall?.('notify.plugin', 'enqueue', [payload]);
-      } catch {}
+      } catch (e) {}
     });
   }
 
@@ -97,7 +97,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'enabled', enabled);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     });
   }
@@ -109,7 +109,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'tts', enabled);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     });
   }
@@ -122,7 +122,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsEngine', val);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     });
   }
@@ -158,7 +158,7 @@
         el.ttsEdgeVoice.value = current;
         if (el.ttsEdgeVoice.value !== current) el.ttsEdgeVoice.value = '';
       }
-    } catch {}
+    } catch (e) {}
   };
 
   // 音色设置：voice, pitch, rate
@@ -169,7 +169,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsVoiceURI', val);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     });
   }
@@ -181,7 +181,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsPitch', v);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     };
     el.ttsPitch.addEventListener('change', handler);
@@ -195,7 +195,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsRate', v);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     };
     el.ttsRate.addEventListener('change', handler);
@@ -211,7 +211,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'systemSoundVolume', norm);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     };
     el.systemSoundVolume.addEventListener('input', handler);
@@ -223,7 +223,7 @@
     document.querySelectorAll('.win-btn').forEach((b) => {
       b.addEventListener('click', () => window.settingsAPI?.windowControl(b.dataset.act));
     });
-  } catch {}
+  } catch (e) {}
   if (el.ttsEdgeVoice) {
     const handler = () => {
       const val = (el.ttsEdgeVoice.value || '').trim();
@@ -231,7 +231,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsEdgeVoice', val);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     };
     el.ttsEdgeVoice.addEventListener('change', handler);
@@ -245,7 +245,7 @@
         try {
           await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsVolume', norm);
           await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
-        } catch {}
+        } catch (e) {}
       })();
     };
     el.ttsVolume.addEventListener('input', handler);

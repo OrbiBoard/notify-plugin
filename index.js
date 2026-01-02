@@ -14,15 +14,15 @@ let pendingQueue = [];
 try {
   edgeTts = require('edge-tts-nodejs');
   log('edge-tts-nodejs:require');
-} catch {
+} catch (e) {
   try {
     edgeTts = require('edge-tts-node');
     log('edge-tts-node:require');
-  } catch {
+  } catch (e) {
     try {
       edgeTts = require('msedge-tts');
       log('msedge-tts:require');
-    } catch {}
+    } catch (e) {}
   }
 }
 
@@ -102,7 +102,7 @@ function createRuntimeWindow() {
     if (typeof runtimeWin.setVisibleOnAllWorkspaces === 'function') {
       runtimeWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     }
-  } catch {}
+  } catch (e) {}
 
   // 默认开启穿透
   runtimeWin.setIgnoreMouseEvents(true, { forward: true });
@@ -116,7 +116,7 @@ function createRuntimeWindow() {
         const cfg = store.getAll('notify-plugin');
         runtimeWin?.webContents?.send('notify:config:update', cfg);
         log('runtime:broadcast_config');
-      } catch {}
+      } catch (e) {}
       try {
         if (pendingQueue.length) {
           const list = pendingQueue.slice();
@@ -124,9 +124,9 @@ function createRuntimeWindow() {
           log('runtime:flush_pending', list.length);
           runtimeWin?.webContents?.send('notify:enqueue', list);
         }
-      } catch {}
+      } catch (e) {}
     });
-  } catch {}
+  } catch (e) {}
 
   runtimeWin.on('closed', () => {
     runtimeWin = null;
@@ -150,11 +150,11 @@ function ensureAudioWindow() {
       focusable: false,
       webPreferences: { nodeIntegration: false, contextIsolation: true, autoplayPolicy: 'no-user-gesture-required', backgroundThrottling: false }
     });
-    try { audioWin.webContents.setAudioMuted(false); } catch {}
-    try { audioWin.loadURL('about:blank'); } catch {}
+    try { audioWin.webContents.setAudioMuted(false); } catch (e) {}
+    try { audioWin.loadURL('about:blank'); } catch (e) {}
     audioWin.on('closed', () => { audioWin = null; });
     return audioWin;
-  } catch {
+  } catch (e) {
     return null;
   }
 }
@@ -172,37 +172,37 @@ async function playSoundHeadless(which = 'in') {
     if (!win || win.isDestroyed()) return false;
     const html = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0">
       <audio id="a" src="${fileUrl}" autoplay></audio>
-      <script>try{const a=document.getElementById('a');a.volume=1.0;a.onended=()=>{try{window.close()}catch{}};a.onerror=()=>{try{window.close()}catch{}};}catch{}</script>
+      <script>try{const a=document.getElementById('a');a.volume=1.0;a.onended=()=>{try{window.close()}catch (e) {}};a.onerror=()=>{try{window.close()}catch (e) {}};}catch (e) {}</script>
     </body></html>`;
-    try { await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html)); } catch {}
+    try { await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html)); } catch (e) {}
     try {
       if (volumeLib && typeof volumeLib.setVolume === 'function') {
         const target = Math.max(0, Math.min(100, Number(store.get('notify-plugin','systemSoundVolume') ?? 80)));
         if (previousVolume == null && typeof volumeLib.getVolume === 'function') {
-          try { previousVolume = await volumeLib.getVolume(); } catch {}
+          try { previousVolume = await volumeLib.getVolume(); } catch (e) {}
         }
         await volumeLib.setVolume(target);
       }
-    } catch {}
+    } catch (e) {}
     let started = false;
     try {
       await new Promise((resolve) => {
-        const onStart = () => { started = true; try { win.webContents.removeListener('media-started-playing', onStart); } catch {}; resolve(); };
-        try { win.webContents.once('media-started-playing', onStart); } catch { resolve(); }
+        const onStart = () => { started = true; try { win.webContents.removeListener('media-started-playing', onStart); } catch (e) {}; resolve(); };
+        try { win.webContents.once('media-started-playing', onStart); } catch (e) { resolve(); }
         // 兜底：若事件未触发，短延迟后继续
         setTimeout(() => resolve(), 300);
       });
-    } catch {}
+    } catch (e) {}
     try {
       if (previousVolume != null && volumeLib && typeof volumeLib.setVolume === 'function') {
         await volumeLib.setVolume(Math.max(0, Math.min(100, Number(previousVolume))));
       }
-    } catch {}
+    } catch (e) {}
     previousVolume = null;
     // 确保自动关闭（页面 onended 已尝试关闭，这里再兜底）
-    try { if (audioWin && !audioWin.isDestroyed()) { setTimeout(() => { try { audioWin.destroy(); } catch {} audioWin = null; }, 500); } } catch {}
+    try { if (audioWin && !audioWin.isDestroyed()) { setTimeout(() => { try { audioWin.destroy(); } catch (e) {} audioWin = null; }, 500); } } catch (e) {}
     return started;
-  } catch {
+  } catch (e) {
     return false;
   }
 }
@@ -210,47 +210,47 @@ async function playSoundHeadless(which = 'in') {
 // 统一的 IPC 注册函数：在初始化或重新启用时调用
 function registerIpcHandlers() {
   try {
-    try { ipcMain.removeHandler('notify:setClickThrough'); } catch {}
+    try { ipcMain.removeHandler('notify:setClickThrough'); } catch (e) {}
     ipcMain.handle('notify:setClickThrough', (_evt, enable) => {
       if (!runtimeWin || runtimeWin.isDestroyed()) return false;
       runtimeWin.setIgnoreMouseEvents(Boolean(enable), { forward: true });
       return true;
     });
 
-    try { ipcMain.removeHandler('notify:setVisible'); } catch {}
+    try { ipcMain.removeHandler('notify:setVisible'); } catch (e) {}
     ipcMain.handle('notify:setVisible', (_evt, visible) => {
       if (!runtimeWin || runtimeWin.isDestroyed()) return false;
       try {
         if (visible) {
-          try { runtimeWin.setAlwaysOnTop(true, 'screen-saver'); } catch {}
+          try { runtimeWin.setAlwaysOnTop(true, 'screen-saver'); } catch (e) {}
           try {
             if (typeof runtimeWin.setVisibleOnAllWorkspaces === 'function') {
               runtimeWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
             }
-          } catch {}
+          } catch (e) {}
           runtimeWin.show();
         } else {
           runtimeWin.hide();
         }
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     });
 
-    try { ipcMain.removeHandler('notify:destroyRuntime'); } catch {}
+    try { ipcMain.removeHandler('notify:destroyRuntime'); } catch (e) {}
     ipcMain.handle('notify:destroyRuntime', () => {
       try {
         if (runtimeWin && !runtimeWin.isDestroyed()) {
-          try { runtimeWin.webContents?.destroy(); } catch {}
-          try { runtimeWin.destroy(); } catch {}
+          try { runtimeWin.webContents?.destroy(); } catch (e) {}
+          try { runtimeWin.destroy(); } catch (e) {}
           runtimeWin = null;
         }
         return true;
-      } catch {
+      } catch (e) {
         return false;
       }
     });
 
-    try { ipcMain.removeHandler('notify:setSystemVolume'); } catch {}
+    try { ipcMain.removeHandler('notify:setSystemVolume'); } catch (e) {}
     ipcMain.handle('notify:setSystemVolume', async (_evt, level) => {
       try {
         if (!volumeLib || typeof volumeLib.setVolume !== 'function') {
@@ -259,7 +259,7 @@ function registerIpcHandlers() {
         }
         const target = Math.max(0, Math.min(100, Number(level || 0)));
         if (previousVolume == null && typeof volumeLib.getVolume === 'function') {
-          try { previousVolume = await volumeLib.getVolume(); } catch {}
+          try { previousVolume = await volumeLib.getVolume(); } catch (e) {}
         }
         await volumeLib.setVolume(target);
         log('volume:set', target);
@@ -270,7 +270,7 @@ function registerIpcHandlers() {
       }
     });
 
-    try { ipcMain.removeHandler('notify:restoreSystemVolume'); } catch {}
+    try { ipcMain.removeHandler('notify:restoreSystemVolume'); } catch (e) {}
     ipcMain.handle('notify:restoreSystemVolume', async () => {
       try {
         if (!volumeLib || typeof volumeLib.setVolume !== 'function') {
@@ -299,20 +299,20 @@ function cleanup(payload) {
   try {
     // 清理窗口
     if (runtimeWin && !runtimeWin.isDestroyed()) {
-      try { runtimeWin.webContents?.destroy(); } catch {}
-      try { runtimeWin.destroy(); } catch {}
+      try { runtimeWin.webContents?.destroy(); } catch (e) {}
+      try { runtimeWin.destroy(); } catch (e) {}
       runtimeWin = null;
     }
     if (settingsWin && !settingsWin.isDestroyed()) {
-      try { settingsWin.webContents?.destroy(); } catch {}
-      try { settingsWin.destroy(); } catch {}
+      try { settingsWin.webContents?.destroy(); } catch (e) {}
+      try { settingsWin.destroy(); } catch (e) {}
       settingsWin = null;
     }
     // 清理队列
     pendingQueue = [];
     // 恢复音量
     if (previousVolume != null && volumeLib) {
-      try { volumeLib.setVolume(previousVolume); } catch {}
+      try { volumeLib.setVolume(previousVolume); } catch (e) {}
       previousVolume = null;
     }
     // 移除 IPC 处理器
@@ -321,7 +321,7 @@ function cleanup(payload) {
       ipcMain.removeHandler('notify:setVisible');
       ipcMain.removeHandler('notify:setSystemVolume');
       ipcMain.removeHandler('notify:restoreSystemVolume');
-    } catch {}
+    } catch (e) {}
     log('notify:cleanup:done');
     return true;
   } catch (e) {
@@ -337,7 +337,7 @@ module.exports = {
   init: (api) => {
     // 插件初始化逻辑
     log('notify:init');
-    try { app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required'); } catch {}
+    try { app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required'); } catch (e) {}
     // 注册 IPC 处理器（避免重复注册：先移除再注册）
     registerIpcHandlers();
     // 延迟创建运行窗口：首次通知或显式调用时再创建，空闲不驻留
@@ -374,7 +374,7 @@ module.exports = {
         const cfg = store.getAll('notify-plugin');
         win.webContents.send('notify:config:update', cfg);
         return true;
-      } catch {
+      } catch (e) {
         return false;
       }
     },
@@ -394,7 +394,7 @@ module.exports = {
         win.webContents.send('notify:enqueue', payload);
         log('enqueue:send', payload?.mode || 'unknown');
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
     enqueueBatch: async (list) => {
       try {
@@ -423,7 +423,7 @@ module.exports = {
             win2.webContents.send('notify:enqueue', rest);
             log('enqueueBatch:send', rest.length);
             return true;
-          } catch { return okAll; }
+          } catch (e) { return okAll; }
         }
         const win = createRuntimeWindow();
         if (!win || win.isDestroyed()) return false;
@@ -435,7 +435,7 @@ module.exports = {
         win.webContents.send('notify:enqueue', payloads);
         log('enqueueBatch:send', payloads.length);
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
     // 兼容自动化事件的细分入口：toast（内部调用 enqueue 构造 payload）
     toast: (title, subText, type, duration, speak) => {
@@ -449,7 +449,7 @@ module.exports = {
         }
         win.webContents.send('notify:enqueue', payload);
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
     // 兼容自动化事件的细分入口：overlay（卡片）
     overlay: (title, subText, autoClose, duration, showClose, closeDelay) => {
@@ -463,7 +463,7 @@ module.exports = {
         }
         win.webContents.send('notify:enqueue', payload);
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
     // 新增：组件化遮罩入口（统一遮罩通知，按组件渲染）
     overlayComponent: (group, componentId, props, duration, showClose, closeDelay) => {
@@ -477,7 +477,7 @@ module.exports = {
         }
         win.webContents.send('notify:enqueue', payload);
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
     // 兼容自动化事件的细分入口：overlay.text（纯文本遮罩）
     ['overlay.text'](text, duration, animate) {
@@ -491,7 +491,7 @@ module.exports = {
         }
         win.webContents.send('notify:enqueue', payload);
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
     // 兼容自动化事件的细分入口：sound（别名，内部调用 playSound）
     sound: async (which = 'in') => {
@@ -505,7 +505,7 @@ module.exports = {
         }
         runtimeWin.webContents.send('notify:enqueue', { mode: 'sound', which: (which === 'out' ? 'out' : 'in') });
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
     // 自动化/运行窗口调用：本地 EdgeTTS 合成，返回文件 URL（暂时隐藏入口）
     edgeSpeakLocal: async (text, voiceName) => {
@@ -524,7 +524,7 @@ module.exports = {
         }
         runtimeWin.webContents.send('notify:enqueue', { mode: 'sound', which: (which === 'out' ? 'out' : 'in') });
         return true;
-      } catch { return false; }
+      } catch (e) { return false; }
     },
 
     getVariable: async (name) => {
@@ -532,7 +532,7 @@ module.exports = {
       if (key === 'timeISO') return new Date().toISOString();
       if (key === 'queueSize') return String(pendingQueue.length || 0);
       if (key === 'systemVolume') {
-        try { if (volumeLib && typeof volumeLib.getVolume === 'function') { const v = await volumeLib.getVolume(); return String(v); } } catch {}
+        try { if (volumeLib && typeof volumeLib.getVolume === 'function') { const v = await volumeLib.getVolume(); return String(v); } } catch (e) {}
         return '';
       }
       return '';
@@ -623,7 +623,7 @@ async function synthEdgeTtsToFile(text, voiceName) {
     }
 
     const outDir = path.join(os.tmpdir(), 'lesson_notify_tts');
-    try { if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true }); } catch {}
+    try { if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true }); } catch (e) {}
     const ext = (String(format).includes('webm') ? 'webm' : 'mp3');
     const fileName = `edge_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
     const outPath = path.join(outDir, fileName);
@@ -675,4 +675,4 @@ async function synthEdgeTtsToFile(text, voiceName) {
 }
 
 // 在顶部注入轻日志函数（按 system.debugLog 或 LP_DEBUG 开关）
-function log(...args) { try { const enabled = (store.get('system','debugLog') || process.env.LP_DEBUG); if (enabled) console.log('[Notify]', ...args); } catch {} }
+function log(...args) { try { const enabled = (store.get('system','debugLog') || process.env.LP_DEBUG); if (enabled) console.log('[Notify]', ...args); } catch (e) {} }
