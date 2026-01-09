@@ -60,7 +60,7 @@
       if (state.ttsEngine !== 'edge') {
         try {
           const voice = state.ttsEdgeVoice || 'zh-CN-XiaoxiaoNeural';
-          const res = await window.notifyAPI?.pluginCall?.('notify.plugin', 'edgeSpeakLocal', [text, voice]);
+          const res = await window.notifyAPI?.pluginCall?.('notify-plugin', 'edgeSpeakLocal', [text, voice]);
           if (res?.ok && res?.path) {
             const a = new Audio(res.path);
             a.volume = vol;
@@ -212,6 +212,8 @@
     el.ovTitle.innerHTML = title;
     el.ovSub.innerHTML = sub || '';
     el.overlay.style.display = 'block';
+    void el.overlay.offsetWidth;
+    el.overlay.classList.add('show');
 
     let closable = !showClose;
     let countdown = closeDelay || 0;
@@ -376,10 +378,13 @@
       if (timerId) clearInterval(timerId);
       if (autoId) clearTimeout(autoId);
       if (autoTimer) clearInterval(autoTimer);
-      el.overlayComponent.style.display = 'none';
-      el.ovCompFrame.src = 'about:blank';
-      try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
-      done();
+      el.overlayComponent.classList.remove('show');
+      setTimeout(() => {
+        el.overlayComponent.style.display = 'none';
+        el.ovCompFrame.src = 'about:blank';
+        try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
+        done();
+      }, 300);
     };
     el.ovCompClose.onclick = () => {
       if (el.ovCompClose.disabled) return;

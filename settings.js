@@ -18,7 +18,7 @@
   // 初始化：从统一配置存储读取
   (async () => {
     try {
-      const cfg = await window.settingsAPI?.configPluginGetAll?.('notify.plugin');
+      const cfg = await window.settingsAPI?.configPluginGetAll?.('notify-plugin');
       if (el.enableNotify) el.enableNotify.checked = (cfg?.enabled ?? true);
       if (el.enableTTS) el.enableTTS.checked = !!cfg?.tts;
       if (el.ttsEngine) el.ttsEngine.value = (cfg?.ttsEngine ?? 'system');
@@ -72,12 +72,12 @@
   // 试听入场与退场音效
   if (el.btnPlayIn) {
     el.btnPlayIn.addEventListener('click', () => {
-      try { window.settingsAPI?.pluginCall?.('notify.plugin', 'playSound', ['in']); } catch (e) {}
+      try { window.settingsAPI?.pluginCall?.('notify-plugin', 'playSound', ['in']); } catch (e) {}
     });
   }
   if (el.btnPlayOut) {
     el.btnPlayOut.addEventListener('click', () => {
-      try { window.settingsAPI?.pluginCall?.('notify.plugin', 'playSound', ['out']); } catch (e) {}
+      try { window.settingsAPI?.pluginCall?.('notify-plugin', 'playSound', ['out']); } catch (e) {}
     });
   }
   // 测试纯文本提示（全屏）
@@ -85,7 +85,7 @@
     el.btnTestOverlayText.addEventListener('click', () => {
       try {
         const payload = { mode: 'overlay.text', text: '这是一条纯文本提示', animate: 'fade', duration: 2500 };
-        window.settingsAPI?.pluginCall?.('notify.plugin', 'enqueue', [payload]);
+        window.settingsAPI?.pluginCall?.('notify-plugin', 'enqueue', [payload]);
       } catch (e) {}
     });
   }
@@ -95,8 +95,8 @@
       const enabled = !!el.enableNotify.checked;
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'enabled', enabled);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'enabled', enabled);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     });
@@ -107,8 +107,8 @@
       const enabled = !!el.enableTTS.checked;
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'tts', enabled);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'tts', enabled);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     });
@@ -120,8 +120,8 @@
       const val = el.ttsEngine.value || 'system';
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsEngine', val);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'ttsEngine', val);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     });
@@ -167,8 +167,8 @@
       const val = el.ttsVoice.value || '';
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsVoiceURI', val);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'ttsVoiceURI', val);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     });
@@ -179,8 +179,8 @@
       const v = Number(el.ttsPitch.value || 1);
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsPitch', v);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'ttsPitch', v);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     };
@@ -193,8 +193,8 @@
       const v = Number(el.ttsRate.value || 1);
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsRate', v);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'ttsRate', v);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     };
@@ -209,8 +209,8 @@
       const norm = Math.round(v);
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'systemSoundVolume', norm);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'systemSoundVolume', norm);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     };
@@ -229,8 +229,8 @@
       const val = (el.ttsEdgeVoice.value || '').trim();
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsEdgeVoice', val);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'ttsEdgeVoice', val);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     };
@@ -243,8 +243,8 @@
       const norm = Math.round(v);
       (async () => {
         try {
-          await window.settingsAPI?.configPluginSet?.('notify.plugin', 'ttsVolume', norm);
-          await window.settingsAPI?.pluginCall?.('notify.plugin', 'broadcastConfig', []);
+          await window.settingsAPI?.configPluginSet?.('notify-plugin', 'ttsVolume', norm);
+          await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
         } catch (e) {}
       })();
     };
