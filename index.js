@@ -3,9 +3,9 @@ const fs = require('fs');
 const os = require('os');
 const { BrowserWindow, ipcMain, screen, app } = require('electron');
 // 读取统一配置存储，用于向运行窗口广播配置更新
-const store = require(path.join(app.getAppPath(), 'src', 'main', 'store.js'));
 const Module = require('module');
 
+let pluginApi = null;
 let runtimeWin = null;
 let settingsWin = null;
 let audioWin = null;
@@ -113,7 +113,7 @@ function createRuntimeWindow() {
   try {
     runtimeWin.webContents.on('did-finish-load', () => {
       try {
-        const cfg = store.getAll('notify-plugin');
+        const cfg = pluginApi ? pluginApi.store.getAll() : {};
         runtimeWin?.webContents?.send('notify:config:update', cfg);
         log('runtime:broadcast_config');
       } catch (e) {}
@@ -177,7 +177,7 @@ async function playSoundHeadless(which = 'in') {
     try { await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html)); } catch (e) {}
     try {
       if (volumeLib && typeof volumeLib.setVolume === 'function') {
-        const target = Math.max(0, Math.min(100, Number(store.get('notify-plugin','systemSoundVolume') ?? 80)));
+        const target = Math.max(0, Math.min(100, Number((pluginApi ? pluginApi.store.get('systemSoundVolume') : 80) ?? 80)));
         if (previousVolume == null && typeof volumeLib.getVolume === 'function') {
           try { previousVolume = await volumeLib.getVolume(); } catch (e) {}
         }
@@ -336,6 +336,7 @@ module.exports = {
   description: '前置类通知插件：队列化通知、TTS播报、类型音频与两种窗口样式',
   init: (api) => {
     // 插件初始化逻辑
+    pluginApi = api;
     log('notify:init');
     try { app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required'); } catch (e) {}
     // 注册 IPC 处理器（避免重复注册：先移除再注册）
@@ -371,7 +372,7 @@ module.exports = {
       const win = createRuntimeWindow();
       if (!win || win.isDestroyed()) return false;
       try {
-        const cfg = store.getAll('notify-plugin');
+        const cfg = pluginApi ? pluginApi.store.getAll() : {};
         win.webContents.send('notify:config:update', cfg);
         return true;
       } catch (e) {
@@ -675,4 +676,4 @@ async function synthEdgeTtsToFile(text, voiceName) {
 }
 
 // 在顶部注入轻日志函数（按 system.debugLog 或 LP_DEBUG 开关）
-function log(...args) { try { const enabled = (store.get('system','debugLog') || process.env.LP_DEBUG); if (enabled) console.log('[Notify]', ...args); } catch (e) {} }
+function log(...args) { try { const enabled = (process.env.LP_DEBUG); if (enabled) console.log('[Notify]', ...args); } catch (e) {} }
