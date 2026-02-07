@@ -23,6 +23,12 @@
         state.enabled = (cfg?.enabled ?? true);
         state.systemSoundVolume = Math.max(0, Math.min(100, Number(cfg?.systemSoundVolume ?? state.systemSoundVolume)));
         state.ttsVolume = Math.max(0, Math.min(100, Number(cfg?.ttsVolume ?? state.ttsVolume)));
+        
+        state.soundIn = cfg?.soundIn || '';
+        state.soundOut = cfg?.soundOut || '';
+        state.soundMessage = cfg?.soundMessage || '';
+        state.soundAlarm = cfg?.soundAlarm || '';
+
         const audio = cfg?.audio || {};
         ['info','warn','error'].forEach((k) => { state.audio[k] = audio?.[k] || null; });
       } catch (e) {}
@@ -30,30 +36,45 @@
   } catch (e) {}
 
   // 基础工具
-  const playSoundBuiltin = (which = 'in', after) => {
+  const playSoundBuiltin = (which = 'in') => new Promise((resolve) => {
     try {
-      const file = which === 'out' ? 'out.mp3' : 'in.mp3';
-      const a = new Audio(`./sounds/${file}`);
+      const configKeys = { in: 'soundIn', out: 'soundOut', message: 'soundMessage', alarm: 'soundAlarm' };
+      const map = { in: 'in.mp3', out: 'out.mp3', message: 'message.mp3', alarm: 'alarm.mp3' };
+      
+      const key = configKeys[which] || 'soundIn';
+      const customPath = state[key] || '';
+      
+      let src = '';
+      if (customPath) {
+        // Handle absolute paths for audio source (file://)
+        src = 'file:///' + customPath.replace(/\\/g, '/');
+      } else {
+        const file = map[which] || map.in;
+        src = `./sounds/${file}`;
+      }
+
+      const a = new Audio(src);
       // 程序内音量保持 100%，改为系统音量暂调
       a.volume = 1.0;
       try {
         const target = Math.max(0, Math.min(100, Number(state.systemSoundVolume || 80)));
         window.notifyAPI?.setSystemVolume?.(target);
       } catch (e) {}
-      a.addEventListener('ended', () => {
+      const done = () => {
         try { window.notifyAPI?.restoreSystemVolume?.(); } catch (e) {}
-        try { if (typeof after === 'function') after(); } catch (e) {}
-      });
-      a.play().catch(() => {
-        // 播放失败也尝试恢复
-        try { window.notifyAPI?.restoreSystemVolume?.(); } catch (e) {}
-        try { if (typeof after === 'function') after(); } catch (e) {}
-      });
-    } catch (e) {}
-  };
+        resolve();
+      };
+      a.addEventListener('ended', done);
+      a.addEventListener('error', done);
+      a.play().catch(done);
+    } catch (e) { resolve(); }
+  });
 
-  const speak = async (text) => {
-    if (!state.ttsEnabled) return;
+  const speak = (text) => new Promise(async (resolve) => {
+    if (!state.ttsEnabled) { resolve(); return; }
+    let handled = false;
+    const safeResolve = () => { if (!handled) { handled = true; resolve(); } };
+    
     try {
       const vol = Math.max(0, Math.min(1, Number(state.ttsVolume || 100) / 100));
       // 优先尝试本地 EdgeTTS（除非明确选择远程 edge）
@@ -64,7 +85,9 @@
           if (res?.ok && res?.path) {
             const a = new Audio(res.path);
             a.volume = vol;
-            a.play().catch(() => {});
+            a.onended = safeResolve;
+            a.onerror = safeResolve;
+            a.play().catch(safeResolve);
             return;
           }
         } catch (e) {}
@@ -82,26 +105,31 @@
             const objUrl = URL.createObjectURL(blob);
             const a = new Audio(objUrl);
             a.volume = vol;
-            a.play().catch(() => {});
+            a.onended = safeResolve;
+            a.onerror = safeResolve;
+            a.play().catch(safeResolve);
             setTimeout(() => URL.revokeObjectURL(objUrl), 15000);
             return;
           }
         } catch (e) {}
       }
       // 回退到系统语音
+      if (!window.speechSynthesis) { safeResolve(); return; }
       const utter = new SpeechSynthesisUtterance(text);
       const clamp = (v, min, max) => Math.max(min, Math.min(max, Number(v || 0)));
       utter.pitch = clamp(state.ttsPitch, 0.5, 2);
       utter.rate = clamp(state.ttsRate, 0.5, 2);
       utter.volume = vol;
-      if (state.ttsVoiceURI && window.speechSynthesis) {
+      if (state.ttsVoiceURI) {
         const voices = window.speechSynthesis.getVoices();
         const found = voices.find((v) => (v.voiceURI === state.ttsVoiceURI));
         if (found) utter.voice = found;
       }
-      window.speechSynthesis?.speak(utter);
-    } catch (e) {}
-  };
+      utter.onend = safeResolve;
+      utter.onerror = safeResolve;
+      window.speechSynthesis.speak(utter);
+    } catch (e) { safeResolve(); }
+  });
 
   // 队列控制
   const enqueue = (n) => {
@@ -121,7 +149,7 @@
     next();
   };
 
-  const showNotification = (n) => new Promise((resolve) => {
+  const showNotification = async (n) => {
     const type = n.type || 'info';
     const title = n.title || n.main || '';
     const sub = n.subText || n.sub || '';
@@ -129,39 +157,47 @@
     const speakEnabled = (n.speak === true) || (n.speak === undefined && state.ttsEnabled);
 
     // 声音：按模式控制避免重叠；TTS 按 speak 开关播报
-    const sound = (n.which === 'out') ? 'out' : (n.which === 'none' ? null : 'in');
-    const afterSoundSpeak = () => { if (speakEnabled) speak(speakText); };
+    const sound = (n.which === 'none') ? null : (n.which || 'in');
+    
+    // 音频任务：串行播放音效与TTS
+    const audioTask = async () => {
+      if (sound) await playSoundBuiltin(sound);
+      if (speakEnabled) await speak(speakText);
+    };
 
     if (n.mode === 'sound') {
       // 仅播放音效，不显示任何 UI
-      if (sound) playSoundBuiltin(sound);
-      resolve();
+      await audioTask();
       return;
-    } else if (n.mode === 'overlay') {
-      if (sound) playSoundBuiltin(sound, afterSoundSpeak); else afterSoundSpeak();
-      const source = n.source || n.from || n.caller || n.plugin || '';
-      showOverlay({ title, sub, autoClose: !!n.autoClose, duration: n.duration || 3000, showClose: !!n.showClose, closeDelay: n.closeDelay || 0, source }, resolve);
-    } else if (n.mode === 'overlay.text') {
-      const text = n.text || speakText;
-      const animate = n.animate || 'fade';
-      const duration = n.duration || 3000;
-      if (sound) playSoundBuiltin(sound, afterSoundSpeak); else afterSoundSpeak();
-      showOverlayText({ text, animate, duration }, resolve);
-    } else if (n.mode === 'overlay.component') {
-      if (sound) playSoundBuiltin(sound, afterSoundSpeak); else afterSoundSpeak();
-      const group = n.group || '';
-      const compId = n.componentId || n.component || '';
-      const props = (typeof n.props === 'object' && n.props) ? n.props : {};
-      const duration = n.duration || 3000;
-      const showClose = !!n.showClose;
-      const closeDelay = n.closeDelay || 0;
-      const source = n.source || n.from || n.caller || n.plugin || compId || group || '';
-      showOverlayComponent({ group, compId, props, duration, showClose, closeDelay, source }, resolve);
-    } else {
-      if (sound) playSoundBuiltin(sound, afterSoundSpeak); else afterSoundSpeak();
-      showToast({ title, sub, type, duration: n.duration || 3000 }, resolve);
     }
-  });
+    
+    // 视觉任务：显示 UI 并等待其结束（时间到或关闭）
+    const visualTask = new Promise((resolve) => {
+      const source = n.source || n.from || n.caller || n.plugin || '';
+      const duration = n.duration || 3000;
+      
+      if (n.mode === 'overlay') {
+        showOverlay({ title, sub, autoClose: !!n.autoClose, duration, showClose: !!n.showClose, closeDelay: n.closeDelay || 0, source }, resolve);
+      } else if (n.mode === 'overlay.text') {
+        const text = n.text || speakText;
+        const animate = n.animate || 'fade';
+        showOverlayText({ text, animate, duration }, resolve);
+      } else if (n.mode === 'overlay.component') {
+        const group = n.group || '';
+        const compId = n.componentId || n.component || '';
+        const props = (typeof n.props === 'object' && n.props) ? n.props : {};
+        const showClose = !!n.showClose;
+        const closeDelay = n.closeDelay || 0;
+        const src = n.source || n.from || n.caller || n.plugin || compId || group || '';
+        showOverlayComponent({ group, compId, props, duration, showClose, closeDelay, source: src }, resolve);
+      } else {
+        showToast({ title, sub, type, duration }, resolve);
+      }
+    });
+
+    // 等待两者都完成（避免声音未播完窗口就关闭）
+    await Promise.all([audioTask(), visualTask]);
+  };
 
   const typeColor = (type) => {
     if (type === 'warn') return 'rgba(255,190,11,0.20)';

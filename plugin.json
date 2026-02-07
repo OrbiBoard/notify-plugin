@@ -80,6 +80,30 @@
       "label": "系统音量",
       "desc": "播放音效时的系统主音量(0–100)",
       "default": 80
+    },
+    "soundIn": {
+      "type": "string",
+      "label": "入场音效",
+      "desc": "绝对路径，为空则使用内置",
+      "default": ""
+    },
+    "soundOut": {
+      "type": "string",
+      "label": "退场音效",
+      "desc": "绝对路径，为空则使用内置",
+      "default": ""
+    },
+    "soundMessage": {
+      "type": "string",
+      "label": "消息音效",
+      "desc": "绝对路径，为空则使用内置",
+      "default": ""
+    },
+    "soundAlarm": {
+      "type": "string",
+      "label": "警报音效",
+      "desc": "绝对路径，为空则使用内置",
+      "default": ""
     }
   }
 }

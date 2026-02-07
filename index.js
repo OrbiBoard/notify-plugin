@@ -165,8 +165,20 @@ async function playSoundHeadless(which = 'in') {
       await new Promise((resolve) => app.once('ready', resolve));
     }
     const map = { in: 'in.mp3', out: 'out.mp3', message: 'message.mp3', alarm: 'alarm.mp3' };
-    const file = map[which] || map.in;
-    const filePath = path.join(__dirname, 'sounds', file);
+    const configKeys = { in: 'soundIn', out: 'soundOut', message: 'soundMessage', alarm: 'soundAlarm' };
+    
+    // Check config for custom path
+    let filePath = '';
+    const key = configKeys[which] || 'soundIn';
+    const customPath = (pluginApi ? pluginApi.store.get(key) : '') || '';
+    
+    if (customPath && typeof customPath === 'string' && fs.existsSync(customPath)) {
+      filePath = customPath;
+    } else {
+      const file = map[which] || map.in;
+      filePath = path.join(__dirname, 'sounds', file);
+    }
+
     const fileUrl = 'file:///' + filePath.replace(/\\/g, '/');
     const win = ensureAudioWindow();
     if (!win || win.isDestroyed()) return false;
@@ -382,7 +394,7 @@ module.exports = {
     enqueue: async (payload) => {
       try {
         if (payload && payload.mode === 'sound' && (!runtimeWin || runtimeWin.isDestroyed())) {
-          const which = (payload.which === 'out' ? 'out' : 'in');
+          const which = payload.which || 'in';
           return !!(await playSoundHeadless(which));
         }
         const win = createRuntimeWindow();
@@ -405,7 +417,7 @@ module.exports = {
           let okAll = true;
           for (const p of payloads) {
             if (p && p.mode === 'sound') {
-              const which = (p.which === 'out' ? 'out' : 'in');
+              const which = p.which || 'in';
               const ok = !!(await playSoundHeadless(which));
               okAll = okAll && ok;
             } else {
@@ -498,13 +510,13 @@ module.exports = {
     sound: async (which = 'in') => {
       try {
         if (!runtimeWin || runtimeWin.isDestroyed()) {
-          return !!(await playSoundHeadless(which === 'out' ? 'out' : 'in'));
+          return !!(await playSoundHeadless(which));
         }
         if (runtimeWin.webContents.isLoadingMainFrame()) {
-          pendingQueue.push({ mode: 'sound', which: (which === 'out' ? 'out' : 'in') });
+          pendingQueue.push({ mode: 'sound', which: which });
           return true;
         }
-        runtimeWin.webContents.send('notify:enqueue', { mode: 'sound', which: (which === 'out' ? 'out' : 'in') });
+        runtimeWin.webContents.send('notify:enqueue', { mode: 'sound', which: which });
         return true;
       } catch (e) { return false; }
     },
@@ -517,13 +529,13 @@ module.exports = {
     playSound: async (which = 'in') => {
       try {
         if (!runtimeWin || runtimeWin.isDestroyed()) {
-          return !!(await playSoundHeadless(which === 'out' ? 'out' : 'in'));
+          return !!(await playSoundHeadless(which));
         }
         if (runtimeWin.webContents.isLoadingMainFrame()) {
-          pendingQueue.push({ mode: 'sound', which: (which === 'out' ? 'out' : 'in') });
+          pendingQueue.push({ mode: 'sound', which: which });
           return true;
         }
-        runtimeWin.webContents.send('notify:enqueue', { mode: 'sound', which: (which === 'out' ? 'out' : 'in') });
+        runtimeWin.webContents.send('notify:enqueue', { mode: 'sound', which: which });
         return true;
       } catch (e) { return false; }
     },

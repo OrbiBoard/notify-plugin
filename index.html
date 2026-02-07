@@ -24,148 +24,233 @@
       </div>
     </div>
     <div class="wrap">
-      <div class="section">
-        <div class="section-title"><i class="ri-notification-3-line"></i> 通知设置</div>
-        <div class="muted">配置播报与类型音频；通知展示在“通知运行窗口”。</div>
+      <header>
+        <h1>通知设置</h1>
+        <p>配置播报与类型音频；通知展示在“通知运行窗口”。</p>
+      </header>
 
-          <div class="form">
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-notification-3-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">启用通知</div>
-                <div class="setting-desc">关闭后不再显示通知或播放音效。</div>
-              </div>
-              <div class="setting-action">
-                <label class="switch"><input id="enableNotify" type="checkbox" /><span class="slider"></span></label>
-              </div>
+      <div class="subnav">
+        <button class="sub-item active" data-tab="basic"><i class="ri-settings-2-line"></i> 基础</button>
+        <button class="sub-item" data-tab="sound"><i class="ri-music-2-line"></i> 音效</button>
+        <button class="sub-item" data-tab="broadcast"><i class="ri-broadcast-line"></i> 播报</button>
+        <button class="sub-item" data-tab="volume"><i class="ri-volume-up-line"></i> 音量</button>
+        <button class="sub-item" data-tab="debug"><i class="ri-bug-line"></i> 调试</button>
+      </div>
+
+      <!-- 基础 -->
+      <div id="tab-basic" class="panel">
+        <div class="form">
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-notification-3-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">启用通知</div>
+              <div class="setting-desc">关闭后不再显示通知或播放音效。</div>
             </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-speaker-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">启用播报（TTS）</div>
-                <div class="setting-desc">开启后按通知内容进行语音播报。</div>
-              </div>
-              <div class="setting-action">
-                <label class="switch"><input id="enableTTS" type="checkbox" /><span class="slider"></span></label>
-              </div>
+            <div class="setting-action">
+              <label class="switch"><input id="enableNotify" type="checkbox" /><span class="slider"></span></label>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-cpu-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">播报引擎</div>
-                <div class="setting-desc">支持系统语音与本地 EdgeTTS。</div>
-              </div>
-              <div class="setting-action">
-                <select id="ttsEngine">
-                  <option value="system">系统语音（Web Speech）</option>
-                  <option value="edge.local">本地 EdgeTTS（Node）</option>
-                </select>
-              </div>
+      <!-- 音效 -->
+      <div id="tab-sound" class="panel" hidden>
+        <div class="form">
+          <div class="setting-item full">
+            <div class="setting-main">
+              <div class="setting-title">通知音效管理</div>
+              <div class="setting-desc">可为不同类型指定本地音频文件（绝对路径），为空则使用内置默认音效。</div>
             </div>
+          </div>
 
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-mic-2-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">音色（系统语音）</div>
-                <div class="setting-desc">选择用于播报的系统语音。</div>
-              </div>
-              <div class="setting-action">
-                <select id="ttsVoice"></select>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-mic-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">音色（EdgeTTS 本地）</div>
-                <div class="setting-desc">选择 EdgeTTS 的音色。</div>
-              </div>
-              <div class="setting-action">
-                <select id="ttsEdgeVoice"></select>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-sound-module-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">音高</div>
-                <div class="setting-desc">调节播报音色的音高（0.5–2.0，默认1.0）。</div>
-              </div>
-              <div class="setting-action">
-                <input id="ttsPitch" type="range" min="0.5" max="2" step="0.1" />
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-speed-up-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">语速</div>
-                <div class="setting-desc">调节播报语速（0.5–2.0，默认1.0）。</div>
-              </div>
-              <div class="setting-action">
-                <input id="ttsRate" type="range" min="0.5" max="2" step="0.1" />
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-volume-up-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">通知音效</div>
-                <div class="setting-desc">统一使用 <code>sounds/in.mp3</code> 与 <code>sounds/out.mp3</code>。可在此处试听。</div>
-              </div>
-              <div class="setting-action">
-                <div class="inline">
-                  <button class="btn secondary" id="btnPlayIn"><i class="ri-play-line"></i> 试听入场</button>
-                  <button class="btn secondary" id="btnPlayOut"><i class="ri-play-line"></i> 试听退场</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-volume-down-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">TTS播报音量</div>
-                <div class="setting-desc">仅影响 TTS 播报，不改变系统主音量。</div>
-              </div>
-              <div class="setting-action">
-                <input id="ttsVolume" type="range" min="0" max="100" step="1" />
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-equalizer-line"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">系统音量（音效时）</div>
-                <div class="setting-desc">播放通知音效前暂时将系统音量调整到此值；播放后恢复。</div>
-              </div>
-              <div class="setting-action">
-                <input id="systemSoundVolume" type="range" min="0" max="100" step="1" />
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-icon"><i class="ri-font-size"></i></div>
-              <div class="setting-main">
-                <div class="setting-title">测试纯文本提示（全屏）</div>
-                <div class="setting-desc">无卡片、较大字体、带载入/载出动画。</div>
-              </div>
-              <div class="setting-action">
-                <div class="inline">
-                  <button class="btn" id="btnTestOverlayText"><i class="ri-layout-top-2-line"></i> 测试</button>
-                </div>
+          <!-- Sound Item: IN -->
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-login-box-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">入场音效 (In)</div>
+              <div class="inline">
+                <input type="text" id="soundIn" placeholder="默认音效" readonly />
+                <button class="btn secondary" data-action="browse" data-target="soundIn"><i class="ri-folder-open-line"></i></button>
+                <button class="btn secondary" data-action="restore" data-target="soundIn"><i class="ri-refresh-line"></i></button>
+                <button class="btn secondary" data-action="play" data-target="in"><i class="ri-play-line"></i></button>
               </div>
             </div>
           </div>
+
+          <!-- Sound Item: OUT -->
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-logout-box-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">退场音效 (Out)</div>
+              <div class="inline">
+                <input type="text" id="soundOut" placeholder="默认音效" readonly />
+                <button class="btn secondary" data-action="browse" data-target="soundOut"><i class="ri-folder-open-line"></i></button>
+                <button class="btn secondary" data-action="restore" data-target="soundOut"><i class="ri-refresh-line"></i></button>
+                <button class="btn secondary" data-action="play" data-target="out"><i class="ri-play-line"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sound Item: MESSAGE -->
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-message-3-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">消息音效 (Message)</div>
+              <div class="inline">
+                <input type="text" id="soundMessage" placeholder="默认音效" readonly />
+                <button class="btn secondary" data-action="browse" data-target="soundMessage"><i class="ri-folder-open-line"></i></button>
+                <button class="btn secondary" data-action="restore" data-target="soundMessage"><i class="ri-refresh-line"></i></button>
+                <button class="btn secondary" data-action="play" data-target="message"><i class="ri-play-line"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sound Item: ALARM -->
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-alarm-warning-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">警报音效 (Alarm)</div>
+              <div class="inline">
+                <input type="text" id="soundAlarm" placeholder="默认音效" readonly />
+                <button class="btn secondary" data-action="browse" data-target="soundAlarm"><i class="ri-folder-open-line"></i></button>
+                <button class="btn secondary" data-action="restore" data-target="soundAlarm"><i class="ri-refresh-line"></i></button>
+                <button class="btn secondary" data-action="play" data-target="alarm"><i class="ri-play-line"></i></button>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      <div class="section">
-        <div class="section-title"><i class="ri-window-line"></i> 运行窗口</div>
-        <div class="muted">通知展示窗口：<code>runtime.html</code>，由其它插件调用。</div>
+      <!-- 播报 -->
+      <div id="tab-broadcast" class="panel" hidden>
+        <div class="form">
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-speaker-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">启用播报（TTS）</div>
+              <div class="setting-desc">开启后按通知内容进行语音播报。</div>
+            </div>
+            <div class="setting-action">
+              <label class="switch"><input id="enableTTS" type="checkbox" /><span class="slider"></span></label>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-cpu-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">播报引擎</div>
+              <div class="setting-desc">支持系统语音与本地 EdgeTTS。</div>
+            </div>
+            <div class="setting-action">
+              <select id="ttsEngine">
+                <option value="system">系统语音（Web Speech）</option>
+                <option value="edge.local">本地 EdgeTTS（Node）</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-mic-2-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">音色（系统语音）</div>
+              <div class="setting-desc">选择用于播报的系统语音。</div>
+            </div>
+            <div class="setting-action">
+              <select id="ttsVoice"></select>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-mic-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">音色（EdgeTTS 本地）</div>
+              <div class="setting-desc">选择 EdgeTTS 的音色。</div>
+            </div>
+            <div class="setting-action">
+              <select id="ttsEdgeVoice"></select>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-sound-module-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">音高</div>
+              <div class="setting-desc">调节播报音色的音高（0.5–2.0，默认1.0）。</div>
+            </div>
+            <div class="setting-action">
+              <input id="ttsPitch" type="range" min="0.5" max="2" step="0.1" />
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-speed-up-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">语速</div>
+              <div class="setting-desc">调节播报语速（0.5–2.0，默认1.0）。</div>
+            </div>
+            <div class="setting-action">
+              <input id="ttsRate" type="range" min="0.5" max="2" step="0.1" />
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- 音量 -->
+      <div id="tab-volume" class="panel" hidden>
+        <div class="form">
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-volume-down-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">TTS播报音量</div>
+              <div class="setting-desc">仅影响 TTS 播报，不改变系统主音量。</div>
+            </div>
+            <div class="setting-action">
+              <input id="ttsVolume" type="range" min="0" max="100" step="1" />
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-equalizer-line"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">系统音量（音效时）</div>
+              <div class="setting-desc">播放通知音效前暂时将系统音量调整到此值；播放后恢复。</div>
+            </div>
+            <div class="setting-action">
+              <input id="systemSoundVolume" type="range" min="0" max="100" step="1" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 调试 -->
+      <div id="tab-debug" class="panel" hidden>
+        <div class="form">
+          <div class="setting-item">
+            <div class="setting-icon"><i class="ri-font-size"></i></div>
+            <div class="setting-main">
+              <div class="setting-title">测试纯文本提示（全屏）</div>
+              <div class="setting-desc">无卡片、较大字体、带载入/载出动画。</div>
+            </div>
+            <div class="setting-action">
+              <div class="inline">
+                <button class="btn" id="btnTestOverlayText"><i class="ri-layout-top-2-line"></i> 测试</button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="setting-item">
+             <div class="setting-icon"><i class="ri-window-line"></i></div>
+             <div class="setting-main">
+                <div class="setting-title">运行窗口</div>
+                <div class="setting-desc">通知展示窗口：<code>runtime.html</code>，由其它插件调用。</div>
+             </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <script src="settings.js"></script>
   </body>
-  </html>
+</html>
