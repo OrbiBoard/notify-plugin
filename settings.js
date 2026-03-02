@@ -1,6 +1,7 @@
 (() => {
   const el = {
     enableNotify: document.getElementById('enableNotify'),
+    notifyProvider: document.getElementById('notifyProvider'),
     enableTTS: document.getElementById('enableTTS'),
     ttsEngine: document.getElementById('ttsEngine'),
     ttsVoice: document.getElementById('ttsVoice'),
@@ -93,6 +94,19 @@
     try {
       const cfg = await window.settingsAPI?.configPluginGetAll?.('notify-plugin');
       if (el.enableNotify) el.enableNotify.checked = (cfg?.enabled ?? true);
+      
+      // Init providers
+      (async () => {
+        try {
+          if (el.notifyProvider) {
+              // Fetch providers from backend
+              const providers = await window.settingsAPI?.pluginCall?.('notify-plugin', 'getProviders', []);
+              const current = cfg?.provider || 'builtin';
+              updateProviderList(providers, current);
+          }
+        } catch(e) {}
+      })();
+
       if (el.enableTTS) el.enableTTS.checked = !!cfg?.tts;
       if (el.ttsEngine) el.ttsEngine.value = (cfg?.ttsEngine ?? 'system');
       if (el.ttsPitch) el.ttsPitch.value = (cfg?.ttsPitch ?? 1);
@@ -111,6 +125,51 @@
       initEdgeVoices(cfg?.ttsEdgeVoice);
     } catch (e) {}
   })();
+
+  // Provider list update helper
+  const updateProviderList = (providers, current) => {
+      if (!el.notifyProvider) return;
+      el.notifyProvider.innerHTML = '';
+      
+      // Default builtin
+      if (!providers || Object.keys(providers).length === 0) {
+          const opt = document.createElement('option');
+          opt.value = 'builtin';
+          opt.textContent = '通知服务';
+          el.notifyProvider.appendChild(opt);
+      } else {
+          Object.keys(providers).forEach(key => {
+              const p = providers[key];
+              const opt = document.createElement('option');
+              opt.value = key;
+              opt.textContent = p.name || key;
+              el.notifyProvider.appendChild(opt);
+          });
+      }
+      
+      el.notifyProvider.value = current || 'builtin';
+  };
+
+  // Listen for provider updates
+  if (window.settingsAPI && window.settingsAPI.ipcRenderer) {
+      window.settingsAPI.ipcRenderer.on('notify:providers:update', (evt, providers) => {
+          const current = el.notifyProvider ? el.notifyProvider.value : 'builtin';
+          updateProviderList(providers, current);
+      });
+  }
+  
+  // Provider change handler
+  if (el.notifyProvider) {
+      el.notifyProvider.addEventListener('change', () => {
+          const val = el.notifyProvider.value || 'builtin';
+          (async () => {
+            try {
+              await window.settingsAPI?.configPluginSet?.('notify-plugin', 'provider', val);
+              await window.settingsAPI?.pluginCall?.('notify-plugin', 'broadcastConfig', []);
+            } catch (e) {}
+          })();
+      });
+  }
 
   // 语音列表加载
   const initVoices = (currentURI) => {

@@ -11,6 +11,10 @@ let settingsWin = null;
 let audioWin = null;
 let edgeTts = null;
 let pendingQueue = [];
+let providers = {
+  builtin: { name: '通知服务', handler: null } // Built-in is default, handler handled internally
+};
+
 try {
   edgeTts = require('edge-tts-nodejs');
   log('edge-tts-nodejs:require');
@@ -364,6 +368,29 @@ module.exports = {
   functions: {
     openSettings: () => { openSettingsWindow(); return true; },
     reopenRuntime: () => { createRuntimeWindow(); return true; },
+    
+    // 注册通知执行方
+    registerProvider: (id, name, handler) => {
+      if (!id || !name) return false;
+      providers[id] = { name, handler };
+      log('registerProvider', id);
+      // Notify settings window if open
+      if (settingsWin && !settingsWin.isDestroyed()) {
+         settingsWin.webContents.send('notify:providers:update', providers);
+      }
+      return true;
+    },
+    
+    // 获取所有执行方
+    getProviders: () => {
+      // Return serializable object (no functions)
+      const list = {};
+      Object.keys(providers).forEach(k => {
+        list[k] = { name: providers[k].name };
+      });
+      return list;
+    },
+
     // 统一结构：提供 __plugin_init__，与顶层 init 行为一致（供需要时调用）
     __plugin_init__: () => {
       try {
@@ -397,6 +424,20 @@ module.exports = {
           const which = payload.which || 'in';
           return !!(await playSoundHeadless(which));
         }
+        
+        // Check for custom provider
+        const currentProvider = (pluginApi ? pluginApi.store.get('provider') : 'builtin') || 'builtin';
+        if (currentProvider !== 'builtin' && providers[currentProvider] && typeof providers[currentProvider].handler === 'function') {
+           try {
+             providers[currentProvider].handler(payload);
+             log('enqueue:provider', currentProvider);
+             return true;
+           } catch (e) {
+             log('enqueue:provider:error', e.message);
+             // Fallback to builtin? Maybe not, to avoid confusion.
+           }
+        }
+
         const win = createRuntimeWindow();
         if (!win || win.isDestroyed()) return false;
         if (win.webContents.isLoadingMainFrame()) {
@@ -412,6 +453,24 @@ module.exports = {
     enqueueBatch: async (list) => {
       try {
         const payloads = Array.isArray(list) ? list : [list];
+        
+        // Check for custom provider for batch
+        const currentProvider = (pluginApi ? pluginApi.store.get('provider') : 'builtin') || 'builtin';
+        if (currentProvider !== 'builtin' && providers[currentProvider] && typeof providers[currentProvider].handler === 'function') {
+           try {
+             // Pass batch as array or iterate? Usually provider expects single or batch.
+             // Let's assume provider handles array or we call one by one.
+             // Simpler: iterate.
+             for (const p of payloads) {
+               providers[currentProvider].handler(p);
+             }
+             log('enqueueBatch:provider', currentProvider);
+             return true;
+           } catch (e) {
+             log('enqueueBatch:provider:error', e.message);
+           }
+        }
+
         if ((!runtimeWin || runtimeWin.isDestroyed())) {
           const rest = [];
           let okAll = true;

@@ -30,6 +30,12 @@
       "desc": "总开关",
       "default": true
     },
+    "provider": {
+      "type": "string",
+      "label": "通知执行方",
+      "desc": "选择由哪个插件展示通知",
+      "default": "builtin"
+    },
     "tts": {
       "type": "boolean",
       "label": "启用TTS",
