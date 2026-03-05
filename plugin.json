@@ -1,7 +1,7 @@
 {
   "name": "服务.通知",
   "icon": "ri-notification-3-line",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "OrbiBoard",
   "type": "service",
   "description": "前置类通知插件：队列化通知、TTS播报、类型音频与两种窗口样式",
