@@ -243,7 +243,6 @@
   };
 
   const showOverlay = ({ title, sub, autoClose, duration, showClose, closeDelay, source }, done) => {
-    // 进入遮罩时关闭穿透
     try { window.notifyAPI?.setClickThrough(false); } catch (e) {}
     el.ovTitle.innerHTML = title;
     el.ovSub.innerHTML = sub || '';
@@ -301,39 +300,46 @@
       if (autoTimer) clearInterval(autoTimer);
       el.overlay.style.display = 'none';
       el.ovClose.onclick = null;
-      // 退出遮罩恢复穿透
+      el.overlay.onclick = null;
       try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
-      // 遮罩关闭时不强制播放退场音效（按通知入场已播放一次）
       done();
     };
 
-    el.ovClose.onclick = () => {
+    el.ovClose.onclick = (e) => {
+      e.stopPropagation();
       if (el.ovClose.disabled) return;
       close();
+    };
+
+    el.overlay.onclick = (e) => {
+      if (e.target === el.overlay) close();
     };
   };
 
   const showOverlayText = ({ text, animate, duration }, done) => {
-    // 进入遮罩时关闭穿透
     try { window.notifyAPI?.setClickThrough(false); } catch (e) {}
     el.overlayTextContent.textContent = String(text || '').trim();
     el.overlayText.style.display = 'flex';
-    // 动画控制
     const inCls = (animate === 'zoom') ? 'anim-zoom-in' : 'anim-fade-in';
     const outCls = (animate === 'zoom') ? 'anim-zoom-out' : 'anim-fade-out';
     el.overlayText.classList.add(inCls);
     const dur = Math.max(800, Number(duration) || 3000);
-    setTimeout(() => {
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
       el.overlayText.classList.remove(inCls);
       el.overlayText.classList.add(outCls);
       setTimeout(() => {
         el.overlayText.classList.remove(outCls);
         el.overlayText.style.display = 'none';
-        // 退出遮罩恢复穿透（纯文本遮罩不播放退场音效）
+        el.overlayText.onclick = null;
         try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
         done();
       }, 260);
-    }, dur);
+    };
+    el.overlayText.onclick = close;
+    setTimeout(close, dur);
   };
 
   const showOverlayComponent = async ({ group, compId, props, duration, showClose, closeDelay, source }, done) => {
@@ -418,13 +424,18 @@
       setTimeout(() => {
         el.overlayComponent.style.display = 'none';
         el.ovCompFrame.src = 'about:blank';
+        el.overlayComponent.onclick = null;
         try { window.notifyAPI?.setClickThrough(true); } catch (e) {}
         done();
       }, 300);
     };
-    el.ovCompClose.onclick = () => {
+    el.ovCompClose.onclick = (e) => {
+      e.stopPropagation();
       if (el.ovCompClose.disabled) return;
       close();
+    };
+    el.overlayComponent.onclick = (e) => {
+      if (e.target === el.overlayComponent) close();
     };
   };
 
