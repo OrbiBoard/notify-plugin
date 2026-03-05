@@ -102,7 +102,7 @@
               // Fetch providers from backend
               const providers = await window.settingsAPI?.pluginCall?.('notify-plugin', 'getProviders', []);
               const current = cfg?.provider || 'builtin';
-              updateProviderList(providers, current);
+              updateProviderList(providers.result, current);
           }
         } catch(e) {}
       })();
